@@ -7,8 +7,8 @@ from jdspider.items import JdspiderItem
 class JdSpider(scrapy.Spider):
     name = 'jd'
     allowed_domains = ['jd.com']
-    keyword = input('输入商品(中文)名称：')
-    # keyword = "葡萄"
+    # keyword = input('输入商品(中文)名称：')
+    keyword = "葡萄"
     page = 1
     url = 'https://search.jd.com/Search?keyword=%s&enc=utf-8&qrst=1&rt=1&stop=1&vt=2&wq=%s&page=%d&click=0'
     next_url = 'https://search.jd.com/s_new.php?keyword=%s&enc=utf-8&qrst=1&rt=1&stop=1&vt=2&wq=%s&cid2=653&cid3=655&page=%d&scrolling=y&show_items=%s'
@@ -46,8 +46,6 @@ class JdSpider(scrapy.Spider):
             yield scrapy.Request(item['url'], callback=self.info_parse, meta={"item": item})
 
         headers = {'referer': response.url}
-        print('+++++++++++++++++++++++++++++++++++')
-        print(headers)
         # 后三十页的链接访问会检查referer，referer是就是本页的实际链接
         # referer错误会跳转到：https://www.jd.com/?se=deny
         self.page += 1
@@ -77,9 +75,7 @@ class JdSpider(scrapy.Spider):
                 item['info'] = None
                 yield item
                 continue
-            print(item['title'])
-            # print(item['price'])
-            # print(item['url'])
+            #  print(item['title'])
             yield scrapy.Request(item['url'], callback=self.info_parse, meta={"item": item})
 
         if self.page < 200:
@@ -94,28 +90,21 @@ class JdSpider(scrapy.Spider):
         """
         item = response.meta['item']
         item['info'] = {}
-        # pass
-        # name = response.xpath('//div[@class="inner border"]/div[@class="head"]/a/text()').extract_first()
         name = response.xpath('//*[@id="parameter-brand"]/li/a/text()').extract_first()
         type = response.xpath('//div[@class="item ellipsis"]/text()').extract_first()
         item['info']['name'] = name
         item['info']['type'] = type
-        # 商品介绍
-        # goods = response.xpath('//*[@id="detail"]/div[2]/div[1]/div[1]//ul[@class="parameter2 p-parameter-list"]/li/text()')
         item['goods'] = {}
         for div in response.xpath('//*[@id="detail"]/div[2]/div[1]/div[1]'):
             goods = div.xpath('//ul[@class="parameter2 p-parameter-list"]/li/text()').extract()
             for g in goods:
                 f = g.split('：')[0]
-                v = g.split('：')[1]
-                # v 里面店铺可能为空
-                # 说明 店铺名称  在新标签里 需要重新定义
+                v = g.split('：')[1]                
                 k = ''
                 for k in v:
                     if v == k:
                         v = div.xpath('//ul[@class="parameter2 p-parameter-list"]/li/a/text()').extract_first()
-
-                    item['goods'][f] = v
+                        item['goods'][f] = v
 
         # 规格与包装
         for div in response.xpath('//div[@class="Ptable"]/div[@class="Ptable-item"]'):
